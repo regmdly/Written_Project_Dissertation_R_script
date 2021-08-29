@@ -1,5 +1,11 @@
+## Correlate copy number deletion in HR genes with scarHRD scores of samples
+## Latest update: 30/07/2021
+## Version 1.0.0
+## Author: Dian Lyu
+
+#load library
 library(tidyverse)
-#load data:scar HRD score for 80 samples, copy number profile for 80 samples
+#load data: scar HRD score and copy number profile of 80 samples
 scarHRD_80 = read.csv('scarHRD_80samples.csv', header = T)
 CN = read.csv('copy_number_change.csv', header = T)
 
@@ -7,7 +13,7 @@ score_80 = select(scarHRD_80, HRD.sum, SampleID)
 colnames(score_80)[2]='sample'
 CN = select(CN, sample, gene, CN_status)
 
-##############correlation analysis between scar HRD score and level of deletion 
+#correlation analysis between scar HRD score and level of deletion 
 #categorize LOH and homozygous deletion as 'deletion'
 by_CN = group_by(CN, sample)
 Deletion = count(by_CN, CN_status == 'loss of heterozygosity'|CN_status =="homozygous deletion")
@@ -26,7 +32,7 @@ level_dele = rbind(t,f)
 #a new data frame combining the scarHRD score and level of deletion 
 Combined_80 = left_join(level_dele, score_80, by= 'sample')
 
-# do correlation analysis between level of deletion versus scarHRD score############
+#correlation analysis between level of deletion versus scarHRD score
 library("ggpubr")
 
 #check normality by ploting or shapiro test
@@ -138,12 +144,9 @@ for (i in unique(Combined_80_3$gene)) {
   result_80_2[k,1] = i
   k =k+1
 }
-#error in fisher test using 63 as threshold value because no sample was HRD positive 
+#error in fisher test using 63 as threshold value for HRD because no sample has score > or = 63
 
+#uotput result
 write.table(result_80, file = 'fisher_exact_test_gene_level_80samples.csv', sep = ',', row.names = FALSE)
 
-##function test
-xtabs(~CN_status+HRD.binary+gene, data = Combined_80_2)
-ATM=filter(Combined_80_2, gene=='ATM')
-ATM=xtabs(~CN_status+HRD.binary, data = ATM)
 
