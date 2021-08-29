@@ -1,4 +1,8 @@
-#######2021/7/27 calculate scarHRD from segmentation files using scarHRD package
+## Calculate scarHRD from segmentation files using scarHRD package
+## Latest update: 27/07/2021
+## Version 1.0.0
+## Author: Dian Lyu
+
 #install scarHRD package from github
 install.packages('devtools')
 install.packages('usethis')
@@ -6,7 +10,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install("copynumber")
 
-#library
+#load library
 library(usethis)
 library(devtools)
 install_github('sztup/scarHRD',build_vignettes = TRUE)
@@ -17,7 +21,7 @@ SEG = read.csv("test_VOR114_seg.csv")
 write.table(SEG, file = 'test_VOR114_seg.txt', sep = '\t')
 a = scar_score('test_VOR114_seg.txt', reference = 'grch37', seqz = FALSE, chr.in.names = FALSE)
 
-#######################################for loop
+#calcuate scarHRD for each sample by scar_score function and output the scores as one dataframe
 SEG_file = read.csv('ASCAT_seg.CSV')
 Ploidy_value = read.csv('Vortex_ploidy_values.CSV')
 NEW_SEG = left_join(SEG_file,Ploidy_value)
@@ -35,7 +39,7 @@ colnames(result)[5] <- "SampleID"
 
 write.table(result, file = 'scarHRD_80samples.csv', sep = ',', row.names = FALSE)
 
-###############
+#visualise distribution of scarHRD scores for each STS subtype
 scar=read.csv('scarHRD_80samples.csv')
 colnames(scar)[5]=c('sample')
 Diagnosis = read.csv('D:/R (UCL project)/Vortex study copy number/second/copy_number_change.csv')
@@ -97,12 +101,16 @@ ggplot(data = scar,aes(x = diagnosis, y = HRD.sum,fill=diagnosis))+
   theme(axis.text.y = element_text(angle = 0,vjust =0.5, hjust=1, size = 12))+
   theme(legend.position="none")
 
-##########compare scarHRD scores between subtypes 
+#statistical analysis comparing scarHRD scores between subtypes 
 P_v= pairwise.wilcox.test(scar$HRD.sum, scar$diagnosis,
                      p.adjust.method = "BH")
 P_v=P_v$p.value
 
-################add P value to plot
+#add P value to plot
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
+
 P_v <- tibble::tribble(
   ~group1,     ~group2,   ~p.adj, ~p.adj.signif,
   "other",     "myxofibrosarcoma", 0.01383689, '*',
@@ -112,16 +120,11 @@ P_v <- tibble::tribble(
   "myxoid liposarcoma",     "undifferentiated pleomorphic sarcoma", 0.000118018,'***'
   )
 
-library(tidyverse)
-library(ggpubr)
-library(rstatix)
-
 P_v <- P_v %>%
   mutate(y.position = c(60,64,48,52,56))
 DP+stat_pvalue_manual(P_v, label = "p.adj.signif", tip.length = 0.01)
 
-###############################
-#table: samples size for each STS subtype in this study
+#generate a table showing the samples size for each STS subtype in the dataset
 Diagnosis_table = data.frame()
 Diagnosis_table[1:17,1]=unique(Diagnosis$diagnosis)
 Diagnosis_table[1:17,2]=NA
