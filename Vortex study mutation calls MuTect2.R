@@ -1,6 +1,12 @@
+## Interprete pathogenic somatic mutations in HR genes from MAF files
+## Latest update: 18/8/2021
+## Version 1.0.0
+## Author: Dian Lyu
+
+#load libraty
 library(maftools)
 library(tidyverse)
-#####################################
+
 #load 80 MAF files for all samples and combined them into one dataframe
 list = list.files("Dian_MAFs", pattern=".maf", full.names=T)
 
@@ -68,17 +74,12 @@ oncoplot(maf = NON_HR_MAF,
          legendFontSize= 1.7,
          showTumorSampleBarcodes = TRUE,barcodeSrt=75,SampleNamefontSize=1.1)
 
-
-
-#####################################################
-#functions that filter MAF files
-#SUBSET = subsetMaf(combined_files, genes = HR_genes)%>%
-#subsetMaf(query = "FILTER == 'PASS'")
-
+#identify cancer genes (including HR genes) involved in somatic variant calling
 gene = unique(combined_files$Hugo_Symbol)
 write.table(gene, file = 'gene_MAF.csv', sep = ',', row.names = FALSE)
 
-#####################################################
+######################### generate a summary plot including copy number aberration, sequence aberration and scarHRD score within each sample (n=80)
+#load copy number status of samples
 CN = read.csv('D:/R (UCL project)/Vortex study copy number/second/copy_number_change.csv')
 CN = select(CN,sample,gene,CN_status)
 CN_2 = filter(CN,CN_status=='loss of heterozygosity'|CN_status=='homozygous deletion')
@@ -87,16 +88,12 @@ CN_a[,1]=CN_2[,2]
 CN_a[,2]=CN_2[,1]
 colnames(CN_a)[1:2]=c('gene','sample')
 
-#filter out somatic variants in samples that have no scarHRD scores and copy number data
-#下一步，从MAF data中删除VOR26，VOR50，VOR95,无scarHRD score 和copy number data
+#filter out samples (VOR26，VOR50, and VOR95), for which scarHRD scores and copy number data were not avaliable
 f=unique(HR_related_pathogenic$Tumor_Sample_Barcode)
 a=unique(CN$sample)
-f[!f%in%a]#注意这里没有冒号和后面的 “a[!a%in%b]” 不一样
 HR_related_pathogenic=filter(HR_related_pathogenic,!Tumor_Sample_Barcode%in%c('VOR26','VOR50','VOR95'))
 
 #identify 6 samples that had no deletion (LOH or homozygous deletion) and manually add these samples into MAF file
-#往MAF data中加入六个没有copy number deletion的样本，以便在图中将他们显示出来
-a=unique(CN$sample)
 b=unique(CN_2$sample)
 a[!a%in%b]
 
@@ -105,15 +102,12 @@ d[1:6,]=NA
 d$Tumor_Sample_Barcode[1:6]=c(a[!a%in%b])
 HR_related_pathogenic=rbind(d,HR_related_pathogenic)
 
-
-
 #load scar HRD scores
 scar = read.csv('D:/R (UCL project)/Vortex study scarHRD_80samples/scarHRD_80samples.csv')
 scar = select(scar,HRD.sum,SampleID)
 colnames(scar)=c('scarHRD','Tumor_Sample_Barcode')
 
-#samples order according to scarHRD scores from the highest to the lowest
-#最后sample顺序按scarHRD score由高到低排列
+#ordering the samples according to scarHRD scores from the highest to the lowest
 scar=scar[order(-scar$scarHRD),]
 
 #combine maf, copy number data and scarHRD together
@@ -138,13 +132,7 @@ oncoplot(maf = HR_related_plus_cn_scar,topBarData = 'scarHRD',
          removeNonMutated = FALSE,
          colors = col)
 
-lolli=read.maf(HR_related_pathogenic[7:23,])
-
-#lollipop plot of ATRX pathogenic somatic variants
-lollipopPlot(maf = lolli, gene = 'ATRX',AACol='HGVSp_Short', refSeqID ='NM_000489')
-
-
-############################################################# no HR related gene
+######################################################### identify pathogenic somatic mutations in cancer genes that are not involved in the HR pathway 
 n_HR_p= mutate(non_HR_related,pathogenicity=NA)
 for (i in 1:nrow(n_HR_p)) {
   if(grepl("tolerated",n_HR_p$SIFT[i])&grepl("benign",n_HR_p$PolyPhen[i])){
@@ -158,31 +146,5 @@ n_HR_p=filter(n_HR_p,pathogenicity=='pathogenic')
 #output dataframe
 write.table(n_HR_p, file = 'variants_non_HR_related_pathogenic.csv', sep = ',', row.names = FALSE)
 
-#Mann whitney test
-TP53=filter(n_HR_p,Hugo_Symbol=='TP53')
-TP53=select(TP53,Tumor_Sample_Barcode)
-s=mutate(scar,TP53=NA)
-for (i in 1:nrow(s)) {
-  if(s$Tumor_Sample_Barcode[i]%in%TP53$Tumor_Sample_Barcode){
-    s$TP53[i]='positive'
-  }else{
-    s$TP53[i]='negative'
-  }
-}
-library("ggpubr")
-wilcox.test(scarHRD~TP53,data=s)
-
-RB1=filter(n_HR_p,Hugo_Symbol=='RB1')
-RB1=select(RB1,Tumor_Sample_Barcode)
-s=mutate(scar,RB1=NA)
-for (i in 1:nrow(s)) {
-  if(s$Tumor_Sample_Barcode[i]%in%RB1$Tumor_Sample_Barcode){
-    s$RB1[i]='positive'
-  }else{
-    s$RB1[i]='negative'
-  }
-}
-library("ggpubr")
-wilcox.test(scarHRD~RB1,data=s)
 
 
