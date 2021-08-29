@@ -1,5 +1,11 @@
+## Combine copy number alterations and sequence alterations in HR related genes and correlated them with scarHRD scores
+## Latest update: 09/08/2021
+## Version 1.0.0
+## Author: Dian Lyu
+
+#load library
 library(tidyverse)
-##################load pathogenic mutations
+#load pathogenic mutations
 M = read.csv('D:/R (UCL project)/Vortex study MAF/Vortex study mutation calls MuTect2/variants_HR_related.csv')
 M = select(M,Hugo_Symbol,Variant_Classification,Tumor_Sample_Barcode,IMPACT,SIFT,PolyPhen)
 M = rename(M,sample=Tumor_Sample_Barcode,gene=Hugo_Symbol)
@@ -20,11 +26,10 @@ M_CN=left_join(M,CN)
 M_CN= filter(M_CN, !is.na(CN_status))
 M_CN=mutate(M_CN,Mutation_CN=NA)
 
-###########################################################################
-#categorize samples as bi-allelic mutated if they had homozygous deletion or
-#LOH in combination with pathogenic mutations in at least one of 16 HR pathway genes
-#as mono-allelic if they has no pathogenic mutation but LOH or pathogenic mutation without LOH
-#as WT if they had no pathogenic mutation or LOH or homozygous deletion in any 16 HRD genes
+#categorize samples as one of the following mutational status: 
+#bi-allelic mutated if they had homozygous deletion or LOH in combination with pathogenic mutations in at least one of 16 HR pathway genes
+#mono-allelic mutated if they has no pathogenic mutation but LOH or pathogenic mutation without LOH
+#WT if they had no pathogenic mutation or LOH or homozygous deletion in any 16 HRD genes
 for (i in 1:nrow(M_CN)) {
   if(M_CN$pathogenicity[i]=='pathogenic'& M_CN$CN_status[i]=='loss of heterozygosity'){
     M_CN$Mutation_CN[i]='bi-allelic'
@@ -57,7 +62,7 @@ Total_sample=unique(CN$sample)
 Mono=Total_sample[!Total_sample%in%Bi&!Total_sample%in%WT]#a list of samples 
 #that have either LOH or pathogenic mutations in at least one of 16 HRD gene
 
-################################################### Mann whitney / Fisher's exact test
+################################################### Mann whitney / Fisher's exact test between biallelic inactivation of HR genes and scarHRD scores
 #load scar HRD score for 80 samples
 scar=read.csv('scarHRD_80samples.csv')
 scar=select(scar, HRD.sum,SampleID)
