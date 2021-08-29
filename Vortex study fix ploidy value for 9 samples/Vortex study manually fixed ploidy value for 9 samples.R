@@ -1,22 +1,7 @@
-# VOR114 = read.csv("VOR114.txt")
-# VOR114$sample = "VOR114"
-# VOR125 = read.csv("VOR125.txt")
-# VOR125$sample = "VOR125"
-# VOR135 = read.csv("VOR135.txt")
-# VOR135$sample = "VOR135"
-# VOR231 = read.csv("VOR231.txt")
-# VOR231$sample = "VOR231"
-# VOR253 = read.csv("VOR253.txt")
-# VOR253$sample = "VOR253"
-# VOR267 = read.csv("VOR267.txt")
-# VOR267$sample = "VOR267"
-# VOR67 = read.csv("VOR67.txt")
-# VOR67$sample = "VOR67"
-# VOR73 = read.csv("VOR73.txt")
-# VOR73$sample = "VOR73"
-# VOR8 = read.csv("VOR8.txt")
-# VOR8$sample = "VOR8"
-#total = rbind(VOR114,VOR125,VOR135,VOR231,VOR253,VOR267,VOR67,VOR73,VOR8)
+## Ploidy value calculation
+## Latest update: 16/07/2021
+## Version 1.0.0
+## Author: Dian Lyu
 
 #load ploidy files
 D=data.frame(IOD=0,GALLERY=0,sample=0)
