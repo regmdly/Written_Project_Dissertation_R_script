@@ -1,5 +1,5 @@
 ## determine target HR related gene
-## Latest update: 25/5/2021
+## Latest update: 25/05/2021
 ## Version 1.0.0
 ## Author: Dian Lyu
 
